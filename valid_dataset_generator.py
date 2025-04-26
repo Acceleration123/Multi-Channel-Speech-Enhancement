@@ -65,7 +65,7 @@ class Dataset_Generator:
 
         noisy_reverb_1_dir = os.path.join(self.save_dir, 'noisy_reverb_1')
         noisy_reverb_2_dir = os.path.join(self.save_dir, 'noisy_reverb_2')
-        speech_early_dir = os.path.join(self.save_dir,'speech_early')
+        speech_early_dir = os.path.join(self.save_dir, 'speech_early')
 
         os.makedirs(noisy_reverb_1_dir, exist_ok=True)
         os.makedirs(noisy_reverb_2_dir, exist_ok=True)
