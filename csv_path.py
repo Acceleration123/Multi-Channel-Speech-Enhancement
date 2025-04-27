@@ -16,7 +16,7 @@ def path_converter(old_path_csv, new_path):
         })
 
     new_path_df = pd.DataFrame(new_path_df)
-    new_path_df.to_csv(old_path_csv.replace('.csv', '_new.csv'))
+    new_path_df.to_csv(old_path_csv.replace('.csv', '_new.csv'), index=False)
 
 
 if __name__ == '__main__':
