@@ -8,7 +8,7 @@ from pesq import pesq
 
 
 def measure(noisy_path, clean_path):
-    stoi_score = []
+    score = []
     noisy_list = sorted(librosa.util.find_files(noisy_path, ext='wav'))
     clean_list = sorted(librosa.util.find_files(clean_path, ext='wav'))
 
@@ -16,15 +16,15 @@ def measure(noisy_path, clean_path):
         noisy, fs = sf.read(noisy_list[idx], dtype='float32')
         clean, _ = sf.read(clean_list[idx], dtype='float32')
 
-        stoi_score_new = {
+        score_new = {
             'stoi': stoi(clean, noisy, fs),
             'pseq': pesq(fs, clean, noisy, 'wb')
         }
 
-        stoi_score.append(stoi_score_new)
+        score.append(score_new)
 
-    stoi_df = pd.DataFrame(stoi_score)
-    stoi_df.to_csv('stoi_score.csv', index=False)
+    score_df = pd.DataFrame(score)
+    score_df.to_csv('score.csv', index=False)
 
 
 if __name__ == '__main__':
@@ -34,4 +34,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     measure(args.noisy_path, args.clean_path)
+
 
