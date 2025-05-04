@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Multi_Channel_Wiener(nn.Module):
     def __init__(self, alpha_xx, alpha_xy):
         super(Multi_Channel_Wiener, self).__init__()
@@ -23,6 +24,16 @@ class Multi_Channel_Wiener(nn.Module):
 
         mat_inv = mat - lamda * numerator / denominator  # (B, F, C, C)
         return mat_inv
+
+    @staticmethod
+    def normalize(enhanced, wiener):
+        # enhanced: (B, F, T)
+        # wiener: (B, F, T)
+        enhanced_energy = torch.sum(torch.abs(enhanced) ** 2, dim=1, keepdim=True)  # (B, 1, T)
+        wiener_energy = torch.sum(torch.abs(wiener) ** 2, dim=1, keepdim=True)  # (B, 1, T)
+        norm_factor = torch.sqrt(enhanced_energy / wiener_energy)  # (B, 1, T)
+
+        return norm_factor * wiener
 
     def wiener_filter(self, enhanced, mic):
         # enhanced: (B, F, T)
@@ -59,15 +70,19 @@ class Multi_Channel_Wiener(nn.Module):
     def forward(self, spec_enhanced, spec_mic):
         # spec_enhanced: (B, F, T)  complex
         # spec_mic: (B, F, T, C)  complex
-        spec_enhanced_split = torch.chunk(spec_enhanced, chunks=4, dim=-1)
-        spec_mic_split = torch.chunk(spec_mic, chunks=4, dim=2)
 
+        spec_enhanced_split = torch.chunk(spec_enhanced, chunks=4, dim=2)  # (B, F, T // 4)
+        spec_mic_split = torch.chunk(spec_mic, chunks=4, dim=2)  # (B, F, T // 4, C)
+
+        # Wiener Filter
         wiener_output = []
         for i in range(4):
             wiener_weight = self.wiener_filter(spec_enhanced_split[i], spec_mic_split[i])  # (B, F, T, C)
             wiener_weight_conj = torch.conj(wiener_weight).unsqueeze(3)  # (B, F, T, 1, C)
             wiener_output.append(torch.matmul(wiener_weight_conj, spec_mic_split[i].unsqueeze(-1)))  # (B, F, T, 1, 1)
 
-        wiener_output = torch.cat(wiener_output, dim=2)  # (B, F, T, 1, 1)
+        wiener_output = torch.cat(wiener_output, dim=2).squeeze(-1).squeeze(-1)  # (B, F, T)
 
-        return wiener_output.squeeze(-1).squeeze(-1)  # (B, F, T)
+        wiener_output = self.normalize(spec_enhanced, wiener_output)  # (B, F, T)
+
+        return wiener_output
