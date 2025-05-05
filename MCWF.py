@@ -20,8 +20,7 @@ class Multi_Channel_Wiener(nn.Module):
         quadratic_term = torch.matmul(vec_conj.unsqueeze(2), torch.matmul(mat, vec.unsqueeze(-1)))  # (B, 1, 1)
 
         denominator = 1 + lamda * quadratic_term  # (B, F, 1, 1)
-      
-
+    
         mat_inv = mat - lamda * numerator / denominator  # (B, F, C, C)
         return mat_inv
 
